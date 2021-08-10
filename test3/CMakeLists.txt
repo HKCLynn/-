@@ -1,0 +1,12 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
+
+PROJECT(test3)
+
+find_package(OpenCV REQUIRED)
+
+AUX_SOURCE_DIRECTORY(./ DIR_SRCS)
+
+ADD_EXECUTABLE(test3 ${DIR_SRCS})
+
+target_link_libraries(test3 PRIVATE ${OpenCV_LIBS})
+
