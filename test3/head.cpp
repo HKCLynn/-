@@ -15,6 +15,11 @@ using namespace cv;
 /*@测距并且输出距离*/
 
 
+/**
+*@brief 确定左右灯条
+*@param Point2f left[] 其中一个灯条的四个顶点
+*@param Point2f right[] 另一个一个灯条的四个顶点
+*/
 
 void left_right(Point2f left[], Point2f right[])
 {
@@ -36,6 +41,11 @@ void left_right(Point2f left[], Point2f right[])
     }
 }
 
+
+/**
+*@brief 画出某一灯条的上下两个点
+*@param Point2f led[] 需要画的灯条的四个顶点
+*/
 void write_circle(Point2f led[], Mat frame)
 {
     for (int i = 0; i <= 3; i++)
@@ -48,7 +58,11 @@ void write_circle(Point2f led[], Mat frame)
     }
 }
 
-
+/**
+*@brief 确定某一灯条的上下两个点
+*@param Point2f &top 上下其中一个顶点(返回上顶点)
+*@param Point2f &bottom 上下另一个顶点(返回下顶点)
+*/
 
 void top_bottom(Point2f &top, Point2f &bottom, Point2f *input_led)
 {
@@ -62,6 +76,17 @@ void top_bottom(Point2f &top, Point2f &bottom, Point2f *input_led)
     top = (led[0] + led[1]) / 2;
     bottom = (le1[2] + led[3]) / 2;
 }
+
+
+/**
+*@brief 测距并且输出距离
+*@param float length 装甲板的高
+*@param float weight 装甲板的宽
+*@param Point2f bottom_left 左下点
+*@param Point2f bottom_right 右下点
+*@param Point2f top_right 右上点
+*@param Point2f top_left 左上点
+*/
 
 void range_finding(float length, float weight, Point2f bottom_left, Point2f bottom_right, Point2f top_right, Point2f top_left)
 {   
