@@ -10,19 +10,21 @@
 using namespace std;
 using namespace cv;
 
-class Light
+class Light 
 {
 public:
+    vector<Point> contours;
+    Point2f center;
     //上顶点
     Point2f top;
     //下顶点
     Point2f bottom;
     //高
     double height;
+    double width;
+    Point2f points[4];
     //初始化灯条
-    Light(Point2f input_led[]);
+    Light(Point2f input_led[], vector<Point> contours,Point2f center);
+    Light(){};
+    void getTruePoint();
 };
-
-
-
-

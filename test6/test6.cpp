@@ -12,7 +12,6 @@
 using namespace std;
 using namespace cv;
 
-
 int main(int argc, char *argv[])
 {
     //预测器序列
@@ -31,7 +30,7 @@ int main(int argc, char *argv[])
         vector<Point2f> centers;
         //图像处理
         mask = imgPreprosses(frame);
-        
+
         //寻找装甲板对应的灯条
         FindArmor tools(frame, mask);
         //把装甲板的中心点全部存入中心点序列
@@ -41,7 +40,7 @@ int main(int argc, char *argv[])
 
         //如果不是第一帧
         if (start != 0)
-        {   //更新删除添加，预测操作
+        { //更新删除添加，预测操作
             prediction.update_create_delete(centers, predictors, frame);
         }
         //如果是第一帧
@@ -54,6 +53,10 @@ int main(int argc, char *argv[])
         }
         //放出效果图
         imshow("windows", frame);
-        waitKey(30);
+        imshow("windows2",mask);
+        if (27 == waitKey(30))
+        {
+            break;
+        }
     }
 }
