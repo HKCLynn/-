@@ -1,3 +1,0 @@
-/home/lynn/桌面/test6/build/CMakeFiles/rebuild_cache.dir
-/home/lynn/桌面/test6/build/CMakeFiles/test6.dir
-/home/lynn/桌面/test6/build/CMakeFiles/edit_cache.dir
