@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     //预测器序列
     vector<Predictor> predictors;
     //实例化相机
-    VideoCapture video("/home/lynn/视频/test5.avi");
+    VideoCapture video("/home/lynn/桌面/-/test6/video/test5.avi");
     //是否是第一帧的标志
     int start = 0;
     while (1)

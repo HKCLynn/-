@@ -2,6 +2,9 @@
 *@file Light.h
 *@author 徐英杰（541223130@qq.com）
 */
+
+#ifndef LIGHT_H 
+#define LIGHT_H 
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
@@ -28,3 +31,5 @@ public:
     Light(){};
     void getTruePoint();
 };
+
+#endif

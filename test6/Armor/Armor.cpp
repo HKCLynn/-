@@ -62,6 +62,7 @@ void FindArmor::lights_pair(vector<Point2f> &centers)
             Light input_light(point, contours_all[i], r.center);
             //将筛选出的灯条插入容器中
             lights.push_back(input_light);
+            drawContours(frame, contours_all, i, (255, 255, 255), 10);
         }
     }
     //装甲板容器
@@ -83,42 +84,45 @@ void FindArmor::lights_pair(vector<Point2f> &centers)
             double oppositeOne = get_distance(lights[i].top, lights[j].bottom);
             double oppositeTwo = get_distance(lights[j].top, lights[i].bottom);
             //对灯条进行配对
-            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) < 0.7 &&
-                abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > 0.0001 &&
-                abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) > 0.5 &&
-                abs(light_info[i].angle - light_info[j].angle) < 5 &&
-                input_armor.middleWidth / input_armor.middleHeight < 3.3 &&
-                input_armor.middleWidth / input_armor.middleHeight > 1.1 &&
-                abs(lights[i].height - lights[j].height) < 20 &&
-                abs(oppositeOne - oppositeTwo) / input_armor.middleWidth < 0.115 &&
-                i != j);
+            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > 0.7 ||
+                abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) < 0.0001)
+                continue;
+            if (abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) < 0.5)
+                continue;
+            if (abs(light_info[i].angle - light_info[j].angle) > 5)
+                continue;
+            if (input_armor.middleWidth / input_armor.middleHeight > 3.3 ||
+                input_armor.middleWidth / input_armor.middleHeight < 1.1)
+                continue;
+            if (abs(lights[i].height - lights[j].height) > 20)
+                continue;
+            if (abs(oppositeOne - oppositeTwo) / input_armor.middleWidth > 0.115)
+                continue;
+
+            //配对成功后分别储存这两个灯条的四个点信息
+            light_info[i].points(lights[i].points);
+            light_info[j].points(lights[j].points);
+            lights[i].getTruePoint();
+            lights[j].getTruePoint();
+            input_armor.left_light=lights[i];
+            input_armor.right_light=lights[j];
+            //得到装甲板中心点坐标
+            input_armor.center = (light_info[i].center + light_info[j].center) / 2;
+            //画出中心点
+            circle(frame, input_armor.center, 5, Scalar(0, 0, 255), -1);
+            //插入装甲板的容器里
+            armors.push_back(input_armor);
+            //将中心点放入之前输入的中心点容器中
+            centers.push_back(input_armor.center);
+            //画出配对成功的灯条的外接矩形
+            for (int k = 0; k <= 3; k++)
             {
-
-                //配对成功后分别储存这两个灯条的四个点信息
-                Point2f pointOne[4], pointTwo[4];
-                light_info[i].points(lights[i].points);
-                light_info[j].points(lights[j].points);
-                lights[i].getTruePoint();
-                lights[j].getTruePoint();
-
-                //得到装甲板中心点坐标
-                input_armor.center = (light_info[i].center + light_info[j].center) / 2;
-                //画出中心点
-                circle(frame, input_armor.center, 5, Scalar(0, 0, 255), -1);
-                //插入装甲板的容器里
-                armors.push_back(input_armor);
-                //将中心点放入之前输入的中心点容器中
-                centers.push_back(input_armor.center);
-                //画出配对成功的灯条的外接矩形
-                for (int k = 0; k <= 3; k++)
-                {
-                    line(frame, lights[j].points[k], lights[j].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
-                    line(frame, lights[i].points[k], lights[i].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
-                }
-                //画出对角线
-                line(frame, lights[i].top, lights[j].bottom, Scalar(0, 0, 255), 2);
-                line(frame, lights[j].top, lights[i].bottom, Scalar(0, 0, 255), 2);
+                line(frame, lights[j].points[k], lights[j].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+                line(frame, lights[i].points[k], lights[i].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
             }
+            //画出对角线
+            line(frame, lights[i].top, lights[j].bottom, Scalar(0, 0, 255), 2);
+            line(frame, lights[j].top, lights[i].bottom, Scalar(0, 0, 255), 2);
         }
     }
 }
