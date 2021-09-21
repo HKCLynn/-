@@ -31,7 +31,7 @@ FindArmor::FindArmor(Mat frame, Mat mask)
 *@param centers 配对后将装甲板中心点存入的序列
 */
 
-void FindArmor::lights_pair(vector<Point2f> &centers)
+void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
 {
     //在二值化等图像处理后的图片中寻找轮廓
     findContours(mask, contours_all, hierarchy_all, RETR_EXTERNAL, CHAIN_APPROX_NONE, Point());
@@ -67,7 +67,6 @@ void FindArmor::lights_pair(vector<Point2f> &centers)
     }
     //装甲板容器
     vector<Armor> armors;
-    //对所有筛选出来的灯条进行遍历
     for (int i = 0; i < lights.size(); i++)
     {
         for (int j = i + 1; j < lights.size(); j++)
@@ -84,16 +83,16 @@ void FindArmor::lights_pair(vector<Point2f> &centers)
             double oppositeOne = get_distance(lights[i].top, lights[j].bottom);
             double oppositeTwo = get_distance(lights[j].top, lights[i].bottom);
             //对灯条进行配对
-            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > 0.7 ||
-                abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) < 0.0001)
+            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > 0.7)
                 continue;
             if (abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) < 0.5)
                 continue;
-            if (abs(light_info[i].angle - light_info[j].angle) > 5)
+            if (abs(light_info[i].angle - light_info[j].angle) > 50)
                 continue;
-            if (input_armor.middleWidth / input_armor.middleHeight > 3.3 ||
-                input_armor.middleWidth / input_armor.middleHeight < 1.1)
+            if (input_armor.middleWidth / input_armor.middleHeight > 7.5 ||
+                input_armor.middleWidth / input_armor.middleHeight < 1.5)
                 continue;
+
             if (abs(lights[i].height - lights[j].height) > 20)
                 continue;
             if (abs(oppositeOne - oppositeTwo) / input_armor.middleWidth > 0.115)
@@ -104,25 +103,93 @@ void FindArmor::lights_pair(vector<Point2f> &centers)
             light_info[j].points(lights[j].points);
             lights[i].getTruePoint();
             lights[j].getTruePoint();
-            input_armor.left_light=lights[i];
-            input_armor.right_light=lights[j];
+            input_armor.left_light = lights[i];
+            input_armor.right_light = lights[j];
             //得到装甲板中心点坐标
             input_armor.center = (light_info[i].center + light_info[j].center) / 2;
             //画出中心点
             circle(frame, input_armor.center, 5, Scalar(0, 0, 255), -1);
-            //插入装甲板的容器里
             armors.push_back(input_armor);
-            //将中心点放入之前输入的中心点容器中
-            centers.push_back(input_armor.center);
-            //画出配对成功的灯条的外接矩形
-            for (int k = 0; k <= 3; k++)
+            //插入装甲板的容器里
+            if (Tracker.start == 0)
             {
-                line(frame, lights[j].points[k], lights[j].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
-                line(frame, lights[i].points[k], lights[i].points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+                Tracker.last_armors.push_back(input_armor);
+                //将中心点放入之前输入的中心点容器中
+                centers.push_back(input_armor.center);
             }
-            //画出对角线
-            line(frame, lights[i].top, lights[j].bottom, Scalar(0, 0, 255), 2);
-            line(frame, lights[j].top, lights[i].bottom, Scalar(0, 0, 255), 2);
+            else if (Tracker.start == 1)
+            {
+                Tracker.now_armors.push_back(input_armor);
+                centers.push_back(input_armor.center);
+            }
+        }
+    }
+    if (Tracker.start > 1)
+    {
+        Tracker.update_armors();
+        Tracker.now_armors.clear();
+        for (auto i = 0; i < armors.size(); i++)
+        {
+            Tracker.now_armors.push_back(armors[i]);
+        }
+    }
+    Tracker.start++;
+}
+
+void FindArmor::writing(vector<Armor> armors)
+{
+    for (int i = 0; i < armors.size(); i++)
+    {
+        //画出配对成功的灯条的外接矩形
+        for (int k = 0; k <= 3; k++)
+        {
+            line(this->frame, armors[i].left_light.points[k], armors[i].left_light.points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+            line(this->frame, armors[i].right_light.points[k], armors[i].right_light.points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+        }
+        //画出对角线
+        line(this->frame, armors[i].left_light.top, armors[i].right_light.bottom, Scalar(0, 0, 255), 2);
+        line(this->frame, armors[i].right_light.top, armors[i].left_light.bottom, Scalar(0, 0, 255), 2);
+    }
+}
+
+
+void ArmorTracker::update_armors()
+{
+    for (int i = 0; i < this->last_armors.size(); i++)
+    {
+        bool is_match = false;
+        for (int j = 0; j < this->now_armors.size(); j++)
+        {
+            if (get_distance(last_armors[i].center, now_armors[j].center) < 10)
+            {
+                is_match = true;
+                last_armors[i].dis_count = 0;
+                last_armors[i] = now_armors[j];
+            }
+        }
+        if (is_match == false)
+        {
+            last_armors[i].dis_count++;
+            now_armors.push_back(last_armors[i]);
+        }
+        if (last_armors[i].dis_count > 3)
+        {
+            last_armors.erase(last_armors.begin() + i);
+        }
+    }
+    for (int j = 0; j < this->now_armors.size(); j++)
+    {
+        int is_match = false;
+        for (int i = 0; i < this->last_armors.size(); i++)
+        {
+            if (get_distance(last_armors[i].center, now_armors[j].center) < 10)
+            {
+                is_match = true;
+            }
+            if (is_match == false)
+            {
+                last_armors.push_back(now_armors[j]);
+            }
         }
     }
 }

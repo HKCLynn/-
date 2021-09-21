@@ -55,6 +55,3 @@ Mat imgPreprosses(const Mat src)
     morphologyEx(mask, mask, MORPH_DILATE, kernel, Point(-1, -1), 1);
     return mask;
 }
-
-
-

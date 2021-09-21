@@ -21,11 +21,22 @@ public:
     Point2f center;
     Light left_light;
     Light right_light;
+    int dis_count = 0;
+};
+
+class ArmorTracker
+{
+public:
+    int start=0;
+    vector<Armor> now_armors;
+    vector<Armor> last_armors;
+    void update_armors();
 };
 
 class FindArmor
 {
 public:
+
     //未处理的图像
     Mat frame;
     //处理后的图像
@@ -35,7 +46,8 @@ public:
     //轮廓信息
     vector<Vec4i> hierarchy_all;
     //灯条寻找并配对
-    void lights_pair(vector<Point2f> &centers);
+    void lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker);
     //初始化
     FindArmor(Mat frame, Mat mask);
+    void writing(vector<Armor>armors);
 };

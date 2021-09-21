@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
 {
     //预测器序列
     vector<Predictor> predictors;
+    ArmorTracker Tracker;
     //实例化相机
     VideoCapture video("/home/lynn/桌面/-/test6/video/test5.avi");
     //是否是第一帧的标志
@@ -34,7 +35,8 @@ int main(int argc, char *argv[])
         //寻找装甲板对应的灯条
         FindArmor tools(frame, mask);
         //把装甲板的中心点全部存入中心点序列
-        tools.lights_pair(centers);
+        tools.lights_pair(centers,Tracker);
+        tools.writing(Tracker.now_armors);
         //预测方法
         Prediction prediction;
 
