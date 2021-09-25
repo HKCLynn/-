@@ -16,6 +16,7 @@ using namespace cv;
 class Predictor
 {
 public:
+    float flyingtime;
     //卡尔曼滤波器
     KalmanFilter kfer;
     //该帧的观测点
@@ -31,6 +32,7 @@ public:
         this->next_point=next_point;
         this->this_point=this_point;
     }
+    void update_kf(Point2f center);
     Predictor(){}
 };
 

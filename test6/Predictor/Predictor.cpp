@@ -13,7 +13,6 @@
 using namespace std;
 using namespace cv;
 
-
 /**
 *@brief 创建新观测器，更新观测器，删除观测器，对灯条中心点进行预测
 *@param centers 该帧中心点的测量点序列
@@ -31,14 +30,18 @@ void Prediction::update_create_delete(vector<Point2f> &centers, vector<Predictor
         for (int i = 0; i < centers.size(); i++)
         {
             //如果上一帧预测器中的测量点与当前的测量点距离小于20，则匹配成功
-            if (get_distance(centers[i], predictors[j].this_point) < 20)
+            if (get_distance(centers[i], predictors[j].this_point) < 50)
                 is_match = 1;
         }
         if (is_match == 0)
-            predictors[j].count++;                    //若和该帧的任何点匹配不成功，则计数器加1
+            predictors[j].count++; //若和该帧的任何点匹配不成功，则计数器加1
+    }
+    for (int j = 0; j < predictors.size(); j++)
+    {
         if (predictors[j].count >= 5)                 //若计数器中的数大于5，说明至少连续5帧预测器中的点都没有和任何测量点匹配
             predictors.erase(predictors.begin() + j); //删除该预测器
     }
+
     //该帧的测量点与上帧的测量点进行匹配
     for (int i = 0; i < centers.size(); i++)
     {
@@ -47,26 +50,13 @@ void Prediction::update_create_delete(vector<Point2f> &centers, vector<Predictor
         for (int j = 0; j < predictors.size(); j++)
         {
             //如果两点坐标距离不超过20，匹配成功
-            if (get_distance(centers[i], predictors[j].this_point) < 20)
+            if (get_distance(centers[i], predictors[j].this_point) < 50)
             {
                 //将这一帧匹配成功的点更新
-                predictors[j].this_point = centers[i];
-
-                measurement.at<float>(0) = predictors[j].this_point.x;
-                measurement.at<float>(1) = predictors[j].this_point.y;
-
-                //更新进滤波器中
-                predictors[j].kfer.correct(measurement);
-                //将这一帧的点进行预测，并保存预测点
-                Mat prediction = predictors[j].kfer.predict();
-                predictors[j].next_point = Point(prediction.at<float>(0), prediction.at<float>(1));
-
+                predictors[j].update_kf(centers[i]);
+                is_match = 1;
                 //画出预测点
                 circle(frame, predictors[j].next_point, 8, Scalar(0, 255, 0), -1);
-                //匹配成功的标志
-                is_match = 1;
-                //计数器清零
-                predictors[j].count = 0;
             }
         }
         //若该帧的测量点与预测器中上一帧任何测量点都没有匹配
@@ -93,6 +83,29 @@ void Prediction::update_create_delete(vector<Point2f> &centers, vector<Predictor
             predictors.push_back(new_point);
         }
     }
+}
+
+void Predictor::update_kf(Point2f center)
+{
+
+    Mat measurement = Mat::zeros(2, 1, CV_32F);
+    this->this_point = center;
+
+    measurement.at<float>(0) = this->this_point.x;
+    measurement.at<float>(1) = this->this_point.y;
+
+    this->kfer.transitionMatrix = (Mat_<float>(4, 4) << 1, 0, this->flyingtime, 0,
+                                                        0, 1, 0, this->flyingtime,
+                                                        0, 0, 1, 0,
+                                                        0, 0, 0, 1);
+    //更新进滤波器中
+    this->kfer.correct(measurement);
+    //将这一帧的点进行预测，并保存预测点
+    Mat prediction = this->kfer.predict();
+    this->next_point = Point(prediction.at<float>(0), prediction.at<float>(1));
+
+    //计数器清零
+    this->count = 0;
 }
 
 /**

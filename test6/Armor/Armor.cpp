@@ -43,15 +43,17 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
     {
         //椭圆拟合
         RotatedRect r = fitEllipse(contours_all[i]);
+        r.angle = (r.angle > 90 ? r.angle - 180 : r.angle);
         //对于每一个轮廓进行筛选得到灯条
         if (r.size.height / r.size.width < 7 &&
-            r.size.height / r.size.width > 1.5 &&
-            contourArea(contours_all[i]) > 10 &&
-            contourArea(contours_all[i]) / r.size.area() > 0.6 &&
-            r.center.x - r.size.width > 0 &&
-            r.center.y - r.size.height > 0 &&
-            (r.angle <= 45 ||
-             r.angle >= 135))
+                r.size.height / r.size.width > 1.5 &&
+                contourArea(contours_all[i]) > 10 &&
+                contourArea(contours_all[i]) / r.size.area() > 0.6 &&
+                r.center.x - r.size.width > 0 &&
+                r.center.y - r.size.height > 0 &&
+                contourArea(contours_all[i]) > 10 &&
+                r.angle <= 45 ||
+            r.angle >= -45)
         {
             //灯条的四个点信息
             Point2f point[4];
@@ -87,9 +89,9 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
                 continue;
             if (abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) < 0.5)
                 continue;
-            if (abs(light_info[i].angle - light_info[j].angle) > 50)
+            if (abs(light_info[i].angle - light_info[j].angle) > 5.5)
                 continue;
-            if (input_armor.middleWidth / input_armor.middleHeight > 7.5 ||
+            if (input_armor.middleWidth / input_armor.middleHeight > 3.3 ||
                 input_armor.middleWidth / input_armor.middleHeight < 1.5)
                 continue;
 
@@ -122,15 +124,22 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
                 Tracker.now_armors.push_back(input_armor);
                 centers.push_back(input_armor.center);
             }
+            else
+                centers.push_back(input_armor.center);
         }
     }
     if (Tracker.start > 1)
     {
-        Tracker.update_armors();
         Tracker.now_armors.clear();
         for (auto i = 0; i < armors.size(); i++)
         {
             Tracker.now_armors.push_back(armors[i]);
+        }
+        Tracker.update_armors();
+        centers.clear();
+        for (int i = 0; i < Tracker.last_armors.size(); i++)
+        {
+            centers.push_back(Tracker.last_armors[i].center);
         }
     }
     Tracker.start++;
@@ -152,7 +161,6 @@ void FindArmor::writing(vector<Armor> armors)
     }
 }
 
-
 void ArmorTracker::update_armors()
 {
     for (int i = 0; i < this->last_armors.size(); i++)
@@ -160,11 +168,11 @@ void ArmorTracker::update_armors()
         bool is_match = false;
         for (int j = 0; j < this->now_armors.size(); j++)
         {
-            if (get_distance(last_armors[i].center, now_armors[j].center) < 10)
+            if (get_distance(last_armors[i].center, now_armors[j].center) < 100)
             {
                 is_match = true;
-                last_armors[i].dis_count = 0;
                 last_armors[i] = now_armors[j];
+                last_armors[i].dis_count = 0;
             }
         }
         if (is_match == false)
@@ -172,24 +180,28 @@ void ArmorTracker::update_armors()
             last_armors[i].dis_count++;
             now_armors.push_back(last_armors[i]);
         }
-        if (last_armors[i].dis_count > 3)
-        {
-            last_armors.erase(last_armors.begin() + i);
-        }
     }
+
     for (int j = 0; j < this->now_armors.size(); j++)
     {
         int is_match = false;
         for (int i = 0; i < this->last_armors.size(); i++)
         {
-            if (get_distance(last_armors[i].center, now_armors[j].center) < 10)
+            if (get_distance(last_armors[i].center, now_armors[j].center) < 100)
             {
                 is_match = true;
             }
-            if (is_match == false)
-            {
-                last_armors.push_back(now_armors[j]);
-            }
+        }
+        if (is_match == false)
+        {
+            last_armors.push_back(now_armors[j]);
+        }
+    }
+    for (int i = 0; i < last_armors.size(); i++)
+    {
+        if (last_armors[i].dis_count > 2)
+        {
+            last_armors.erase(last_armors.begin() + i);
         }
     }
 }

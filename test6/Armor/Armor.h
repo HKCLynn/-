@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include <math.h>
-#include "Light.h"
+#include "Light/Light.h"
 using namespace std;
 using namespace cv;
 

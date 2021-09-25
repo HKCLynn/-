@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
         FindArmor tools(frame, mask);
         //把装甲板的中心点全部存入中心点序列
         tools.lights_pair(centers,Tracker);
-        tools.writing(Tracker.now_armors);
+        tools.writing(Tracker.last_armors);
         //预测方法
         Prediction prediction;
 
