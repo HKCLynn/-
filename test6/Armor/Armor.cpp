@@ -3,16 +3,20 @@
 *@author 徐英杰（541223130@qq.com）
 */
 
-#include <iostream>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Core>
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include <math.h>
-#include "Light.h"
+#include <iostream>
 #include "Deal.h"
 #include "Armor.h"
 
+
 using namespace std;
 using namespace cv;
+using namespace Eigen;
 
 /**
 *@brief 初始化
@@ -69,6 +73,18 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
     }
     //装甲板容器
     vector<Armor> armors;
+    sort(lights.begin(), lights.end(),
+         [&](const Light left, Light right) -> bool
+         {
+             return left.center.x < right.center.x;
+         });
+    //
+    sort(light_info.begin(), light_info.end(),
+         [&](const RotatedRect left, RotatedRect right) -> bool
+         {
+             return left.center.x < right.center.x;
+         });
+    //
     for (int i = 0; i < lights.size(); i++)
     {
         for (int j = i + 1; j < lights.size(); j++)
@@ -109,6 +125,7 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
             input_armor.right_light = lights[j];
             //得到装甲板中心点坐标
             input_armor.center = (light_info[i].center + light_info[j].center) / 2;
+            input_armor.get_pnp();
             //画出中心点
             circle(frame, input_armor.center, 5, Scalar(0, 0, 255), -1);
             armors.push_back(input_armor);
@@ -204,4 +221,73 @@ void ArmorTracker::update_armors()
             last_armors.erase(last_armors.begin() + i);
         }
     }
+}
+
+void Armor::get_pnp()
+{
+    //存放装甲板三位坐标的容器
+    vector<Point3f> m_markerCorners3d;
+    m_markerCorners3d.push_back(cv::Point3f(-67.5 / 2, -26.5 / 2, 0)); //以装甲板的中心为原点按顺序插入四个角点三维坐标
+    m_markerCorners3d.push_back(cv::Point3f(+67.5 / 2, -26.5 / 2, 0));
+    m_markerCorners3d.push_back(cv::Point3f(+67.5 / 2, +26.5 / 2, 0));
+    m_markerCorners3d.push_back(cv::Point3f(-67.5 / 2, +26.5 / 2, 0));
+
+    //存放装甲板二维坐标的容器
+    vector<Point2f> mimage;
+    mimage.push_back(left_light.bottom); //插入四个二维像素坐标
+    mimage.push_back(right_light.bottom);
+    mimage.push_back(right_light.top);
+    mimage.push_back(left_light.top);
+    //相机内参矩阵
+    Mat camMatrix = (Mat_<double>(3, 3) << 1.2853517927598091e+03, 0., 3.1944768628958542e+02,
+                     0., 1.2792339468697937e+03, 2.3929354061292258e+02, 0., 0., 1.);
+
+    //相机畸变矩阵
+    Mat distCoeff = (Mat_<double>(5, 1) << -6.3687295852461456e-01, -1.9748008790347320e+00,
+                     3.0970703651800782e-02, 2.1944646842516919e-03, 0.);
+    //旋转向量
+    Mat rVec = cv::Mat::zeros(3, 1, CV_64FC1);
+    //平移向量
+    Mat tVec = cv::Mat::zeros(3, 1, CV_64FC1);
+    //最终相机的世界坐标
+    Mat p_oc = cv::Mat::zeros(3, 3, CV_64FC1);
+    //姿态解算
+    solvePnP(m_markerCorners3d, mimage, camMatrix, distCoeff, rVec, tVec, SOLVEPNP_ITERATIVE);
+
+    //旋转向量Rodrigue后得到的旋转矩阵
+    Mat_<double> rotMat(3, 3);
+    //旋转矩阵的逆矩阵
+    Mat_<double> rotMat_in(3, 3);
+
+    Rodrigues(rVec, rotMat);
+    rotMat.convertTo(rotMat, CV_64FC1);
+    tVec.convertTo(tVec, CV_64FC1);
+    Matrix3d rotated_matrix;  // 旋转矩阵
+    Vector3d transfer_vector; // 平移向量
+
+    // 类型转换
+    cv2eigen(rotMat, rotated_matrix);
+    cv2eigen(tVec, transfer_vector);
+
+    Vector3d euler_angles = rotated_matrix.eulerAngles(0, 1, 2);
+
+    PnP_data.pitch = rad2deg(euler_angles[0]);
+    PnP_data.yaw = rad2deg(euler_angles[1]);
+    PnP_data.roll = rad2deg(euler_angles[2]);
+
+    invert(rotMat, rotMat_in, DECOMP_LU); //求逆矩阵
+
+    p_oc = -rotMat_in * tVec; //得到相机的世界坐标（以装甲板中心坐标为原点）
+
+    //取出p_oc的三个元素（x,y,z坐标）
+    double x = p_oc.at<double>(0, 0);
+    double y = p_oc.at<double>(1, 0);
+    double z = p_oc.at<double>(2, 0);
+    //求出距离
+    PnP_data.distance=sqrt(pow(x,2)+pow(y,2)+pow(z,2));
+
+    tVec.convertTo(tVec, CV_32FC1);
+
+    PnP_data.rotat_vec=rVec;
+    PnP_data.rotat_vec=tVec;
 }

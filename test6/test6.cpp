@@ -8,6 +8,7 @@
 #include "Predictor/Predictor.h"
 #include "Deal/Deal.h"
 #include "Armor/Armor.h"
+#include"Strategy/Strategy.h"
 
 using namespace std;
 using namespace cv;
@@ -16,7 +17,8 @@ int main(int argc, char *argv[])
 {
     //预测器序列
     vector<Predictor> predictors;
-    ArmorTracker Tracker;
+    ArmorTracker tracker;
+    Strategy strategy;
     //实例化相机
     VideoCapture video("/home/lynn/桌面/-/test6/video/test5.avi");
     //是否是第一帧的标志
@@ -31,12 +33,11 @@ int main(int argc, char *argv[])
         vector<Point2f> centers;
         //图像处理
         mask = imgPreprosses(frame);
-
         //寻找装甲板对应的灯条
         FindArmor tools(frame, mask);
         //把装甲板的中心点全部存入中心点序列
-        tools.lights_pair(centers,Tracker);
-        tools.writing(Tracker.last_armors);
+        tools.lights_pair(centers,tracker);
+        tools.writing(tracker.last_armors);
         //预测方法
         Prediction prediction;
 

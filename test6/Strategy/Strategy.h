@@ -1,24 +1,15 @@
 
 
-#pragma once
+#ifndef STATEGY_H 
+#define STATEGY_H 
 
 #include <opencv2/opencv.hpp>
-#include "GyroScope.h"
+#include "Armor.h"
+
+
 using namespace std;
 using namespace cv;
 
-class Strategy
-{
-public:
-    Point2f tracking_armor=Point2f(-1,-1);
-    DataStruct *pSendData;
-    void Strategy_Armors(vector<Point2f> centers);
-    bool has_armor(){if(tracking_armor==Point2f(-1,-1))
-                        return false;
-                        else return true;}
-    bool changeTracker();
-    void judgeShootGryo(float &, float &);
-};
 
 struct DataStruct
 {
@@ -26,3 +17,17 @@ struct DataStruct
     float pitch; // pitch 角度 -- 正值表示枪口往下偏移
     uint8_t End = 0;
 };
+
+
+class Strategy
+{
+public:
+    Armor tracking_armor;
+    DataStruct sendData;
+    void Strategy_Armors(vector<Armor> tracking_armor,Mat frame);
+    bool is_tracking(){return tracking_armor.is_tracked;}
+    bool changeTracker();
+    void judgeShootGryo(float &, float &);
+};
+
+#endif

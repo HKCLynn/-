@@ -55,3 +55,15 @@ Mat imgPreprosses(const Mat src)
     morphologyEx(mask, mask, MORPH_DILATE, kernel, Point(-1, -1), 1);
     return mask;
 }
+
+
+
+float deg2rad(float deg)
+{
+    return deg * 3.1415926 / 180.f;
+}
+
+float rad2deg(float rad)
+{
+    return rad * 180.f / 3.1415926;
+}

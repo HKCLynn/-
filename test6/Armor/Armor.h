@@ -2,11 +2,15 @@
 *@file Armor.h
 *@author 徐英杰（541223130@qq.com）
 */
+
+#pragma once
+
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include <math.h>
 #include "Light/Light.h"
+#include"Deal.h"
 using namespace std;
 using namespace cv;
 
@@ -22,6 +26,11 @@ public:
     Light left_light;
     Light right_light;
     int dis_count = 0;
+    bool is_tracked=false;
+    ResultPnP PnP_data;
+    KalmanFilter kf_dis;
+    KalmanFilter kf;
+    void get_pnp();
 };
 
 class ArmorTracker

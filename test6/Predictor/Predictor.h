@@ -3,6 +3,10 @@
 *@author 徐英杰（541223130@qq.com）
 */
 
+
+#pragma once
+
+
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
