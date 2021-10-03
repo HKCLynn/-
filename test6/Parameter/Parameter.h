@@ -22,3 +22,19 @@ public:
     float MIN_X_LENGTH_RATIO = 0.5; //两灯条中心点x的差值和高度的比值
     float MAX_Y_LENGTH_RATIO = 0.7; //亮灯条中心点y的差值和高度的比值
 };
+
+// 相机参数
+struct CameraParam
+{
+    Mat cameraMatrix;        // 相机内参
+    Mat distCoeff;           // 畸变参数
+    int image_width = 1280;  // 相机宽度和高度
+    int image_height = 1024; // 相机宽度和高度
+    int cam_exposure = 300;  // 相机曝光
+    int cam_gamma = 100;     // 相机 Gamma 值
+    int cam_contrast = 100;  // 相机对比度
+    int cam_Bgain = 180;     // 相机蓝色增益
+    int cam_Ggain = 141;     // 相机绿色增益
+    int cam_Rgain = 100;     // 相机红色增益
+
+};

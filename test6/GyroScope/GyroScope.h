@@ -53,3 +53,15 @@ private:
     bool isInit;       // 初始化标志
     GyroData gyroData; // 陀螺仪参数
 };
+
+
+struct DataStruct
+{
+    uint8_t Flag;       // 视觉接管响应的标志位
+    uint8_t shoot_mode; // 视觉接管发弹的标志位 (具体发弹策略可由电控进一步调整)
+    float yaw;          // yaw 角度   -- 正值表示枪口往右偏移
+    float pitch;        // pitch 角度 -- 正值表示枪口往下偏移
+
+    uint8_t End = 0;
+};
+#pragma pack()
