@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
+#include"Parameter.h"
 #include "Deal.h"
 #include "Armor.h"
-
 
 using namespace std;
 using namespace cv;
@@ -37,6 +37,8 @@ FindArmor::FindArmor(Mat frame, Mat mask)
 
 void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
 {
+    LightParam light_param;
+    ArmorParam armor_param;
     //在二值化等图像处理后的图片中寻找轮廓
     findContours(mask, contours_all, hierarchy_all, RETR_EXTERNAL, CHAIN_APPROX_NONE, Point());
     //存放每个灯条四个点坐标的容器
@@ -49,15 +51,13 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
         RotatedRect r = fitEllipse(contours_all[i]);
         r.angle = (r.angle > 90 ? r.angle - 180 : r.angle);
         //对于每一个轮廓进行筛选得到灯条
-        if (r.size.height / r.size.width < 7 &&
-                r.size.height / r.size.width > 1.5 &&
-                contourArea(contours_all[i]) > 10 &&
-                contourArea(contours_all[i]) / r.size.area() > 0.6 &&
+        if (r.size.height / r.size.width < light_param.MAX_RATIO &&
+                r.size.height / r.size.width > light_param.MIN_RATIO &&
+                contourArea(contours_all[i]) > light_param.MIN_AREA &&
+                contourArea(contours_all[i]) / r.size.area() > light_param.MIN_AREA_RATIO &&
                 r.center.x - r.size.width > 0 &&
                 r.center.y - r.size.height > 0 &&
-                contourArea(contours_all[i]) > 10 &&
-                r.angle <= 45 ||
-            r.angle >= -45)
+                abs(r.angle)<light_param.MAX_ANGLE)
         {
             //灯条的四个点信息
             Point2f point[4];
@@ -101,19 +101,19 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
             double oppositeOne = get_distance(lights[i].top, lights[j].bottom);
             double oppositeTwo = get_distance(lights[j].top, lights[i].bottom);
             //对灯条进行配对
-            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > 0.7)
+            if (abs(light_info[i].center.y - light_info[j].center.y) / ((lights[i].height + lights[j].height) / 2) > armor_param.MAX_Y_LENGTH_RATIO)
                 continue;
-            if (abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) < 0.5)
+            if (abs(light_info[i].center.x - light_info[j].center.x) / ((lights[i].height + lights[j].height) / 2) < armor_param.MIN_X_LENGTH_RATIO)
                 continue;
-            if (abs(light_info[i].angle - light_info[j].angle) > 5.5)
+            if (abs(light_info[i].angle - light_info[j].angle) > armor_param.MAX_ANGLE)
                 continue;
-            if (input_armor.middleWidth / input_armor.middleHeight > 3.3 ||
-                input_armor.middleWidth / input_armor.middleHeight < 1.5)
+            if (input_armor.middleWidth / input_armor.middleHeight > armor_param.MAX_RATIO ||
+                input_armor.middleWidth / input_armor.middleHeight < armor_param.MIN_RATIO)
                 continue;
 
-            if (abs(lights[i].height - lights[j].height) > 20)
+            if (abs(lights[i].height - lights[j].height) > armor_param.MAX_DETLA_LENGTH)
                 continue;
-            if (abs(oppositeOne - oppositeTwo) / input_armor.middleWidth > 0.115)
+            if (abs(oppositeOne - oppositeTwo) / input_armor.middleWidth > armor_param.MAX_CROSS_RATIO)
                 continue;
 
             //配对成功后分别储存这两个灯条的四个点信息
@@ -127,7 +127,7 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
             input_armor.center = (light_info[i].center + light_info[j].center) / 2;
             input_armor.get_pnp();
             //画出中心点
-            circle(frame, input_armor.center, 5, Scalar(0, 0, 255), -1);
+
             armors.push_back(input_armor);
             //插入装甲板的容器里
             if (Tracker.start == 0)
@@ -284,10 +284,55 @@ void Armor::get_pnp()
     double y = p_oc.at<double>(1, 0);
     double z = p_oc.at<double>(2, 0);
     //求出距离
-    PnP_data.distance=sqrt(pow(x,2)+pow(y,2)+pow(z,2));
+    PnP_data.distance = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
 
     tVec.convertTo(tVec, CV_32FC1);
 
-    PnP_data.rotat_vec=rVec;
-    PnP_data.rotat_vec=tVec;
+    PnP_data.rotat_vec = rVec;
+    PnP_data.rotat_vec = tVec;
+}
+
+void Armor::kf_init(KalmanFilter &new_kf)
+{
+
+    RNG rng;
+    new_kf.transitionMatrix = (Mat_<float>(4, 4) << 1, 0, 1, 0,
+                               0, 1, 0, 1,
+                               0, 0, 1, 0,
+                               0, 0, 0, 1);                     //转移矩阵A
+    setIdentity(new_kf.measurementMatrix);                      //测量矩阵H
+    setIdentity(new_kf.processNoiseCov, Scalar::all(1e-5));     //系统噪声方差矩阵Q
+    setIdentity(new_kf.measurementNoiseCov, Scalar::all(1e-7)); //测量噪声方差矩阵R
+    setIdentity(new_kf.errorCovPost, Scalar::all(1));
+    //后验错误估计协方差矩阵P
+    rng.fill(new_kf.statePost, RNG::UNIFORM, 0, 0); //初始状态值x(0)
+    this->kf = new_kf;
+}
+
+void Armor::update_kfer(KalmanFilter &kf)
+{
+    Mat measurement = Mat::zeros(2, 1, CV_32F);
+
+    measurement.at<float>(0) = (float)this->center.x;
+    measurement.at<float>(1) = (float)this->center.y;
+
+    //更新进滤波器中
+
+    //将这一帧的点进行预测，并保存预测点
+    kf.correct(measurement);
+    cout << kf.errorCovPost << endl;
+    Mat prediction = this->kf.predict();
+    this->pre_center = Point2f(prediction.at<float>(0), prediction.at<float>(1));
+}
+
+Point2f Armor::get_pre_angle()
+{
+    //相机内参矩阵
+    Mat camMatrix = (Mat_<double>(3, 3) << 1.2853517927598091e+03, 0., 3.1944768628958542e+02,
+                     0., 1.2792339468697937e+03, 2.3929354061292258e+02, 0., 0., 1.);
+
+    //相机畸变矩阵
+    Mat distCoeff = (Mat_<double>(5, 1) << -6.3687295852461456e-01, -1.9748008790347320e+00,
+                     3.0970703651800782e-02, 2.1944646842516919e-03, 0.);
+    return calculateRelativeAngle(camMatrix, distCoeff, pre_center);
 }

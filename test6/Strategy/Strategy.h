@@ -24,10 +24,9 @@ class Strategy
 public:
     Armor tracking_armor;
     DataStruct sendData;
-    void Strategy_Armors(vector<Armor> tracking_armor,Mat frame);
-    bool is_tracking(){return tracking_armor.is_tracked;}
+    void Strategy_Armors(vector<Armor> &tracking_armor,Mat &frame);
     bool changeTracker();
-    void judgeShootGryo(float &, float &);
+
 };
 
 #endif

@@ -18,6 +18,8 @@ double get_distance(Point2f point_one, Point2f point_two);
 //图像处理
 Mat imgPreprosses(const Mat src);
 
+Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Point2f center);
+
 float deg2rad(float deg);
 float rad2deg(float rad);
 

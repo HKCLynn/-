@@ -94,8 +94,8 @@ void Predictor::update_kf(Point2f center)
     measurement.at<float>(0) = this->this_point.x;
     measurement.at<float>(1) = this->this_point.y;
 
-    this->kfer.transitionMatrix = (Mat_<float>(4, 4) << 1, 0, this->flyingtime, 0,
-                                                        0, 1, 0, this->flyingtime,
+    this->kfer.transitionMatrix = (Mat_<float>(4, 4) << 1, 0, 1, 0,
+                                                        0, 1, 0, 1,
                                                         0, 0, 1, 0,
                                                         0, 0, 0, 1);
     //更新进滤波器中
@@ -149,6 +149,6 @@ void Prediction::kf_initialization(KalmanFilter &kf)
     setIdentity(kf.measurementMatrix);                                                           //测量矩阵H
     setIdentity(kf.processNoiseCov, Scalar::all(1e-5));                                          //系统噪声方差矩阵Q
     setIdentity(kf.measurementNoiseCov, Scalar::all(1e-7));                                      //测量噪声方差矩阵R
-    setIdentity(kf.errorCovPost, Scalar::all(1));                                                //后验错误估计协方差矩阵P
+    setIdentity(kf.errorCovPost, Scalar::all(1));                                           //后验错误估计协方差矩阵P
     rng.fill(kf.statePost, RNG::UNIFORM, 0, 0);                                                  //初始状态值x(0)
 }

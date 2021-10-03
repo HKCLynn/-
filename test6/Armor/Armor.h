@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "Light/Light.h"
-#include"Deal.h"
+#include "Deal.h"
 using namespace std;
 using namespace cv;
 
@@ -23,20 +23,28 @@ public:
     double middleHeight;
     //中心点
     Point2f center;
+    Point2f pre_center;
     Light left_light;
     Light right_light;
     int dis_count = 0;
-    bool is_tracked=false;
+    bool is_tracked = false;
     ResultPnP PnP_data;
     KalmanFilter kf_dis;
     KalmanFilter kf;
+
+    bool kf_inited = false;
+    bool kf_inited_dis = false;
+    void kf_init(KalmanFilter &new_kf);
+    void kf_init_dis();
     void get_pnp();
+    void update_kfer(KalmanFilter &kf);
+    Point2f get_pre_angle();
 };
 
 class ArmorTracker
 {
 public:
-    int start=0;
+    int start = 0;
     vector<Armor> now_armors;
     vector<Armor> last_armors;
     void update_armors();
@@ -45,7 +53,6 @@ public:
 class FindArmor
 {
 public:
-
     //未处理的图像
     Mat frame;
     //处理后的图像
@@ -58,5 +65,5 @@ public:
     void lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker);
     //初始化
     FindArmor(Mat frame, Mat mask);
-    void writing(vector<Armor>armors);
+    void writing(vector<Armor> armors);
 };

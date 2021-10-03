@@ -67,3 +67,27 @@ float rad2deg(float rad)
 {
     return rad * 180.f / 3.1415926;
 }
+
+/**
+ * @brief 用来获得相机中心相对于装甲板中心的角度
+ * 
+ * @param cameraMatrix 相机内参
+ * @param distCoeff 畸变参数
+ * @param center 图像中装甲板中心
+ * @return x, y 方向夹角 -- 目标在图像右方，point.x 为正，目标在图像下方，point.y 为正
+ */
+Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Point2f center)
+{
+     Mat tf_point(3, 1, CV_32F);
+     Mat cameraMatrix_inverse;
+     cameraMatrix.convertTo(cameraMatrix_inverse, CV_32F);
+     cameraMatrix_inverse = cameraMatrix_inverse.inv();
+     tf_point.at<float>(0) = center.x;
+     tf_point.at<float>(1) = center.y;
+     tf_point.at<float>(2) = 1;
+     // 得到tan角矩阵
+     Mat tf_result = cameraMatrix_inverse * tf_point;
+     // 从图像坐标系转换成世界坐标系角度
+     return Point2f(rad2deg(atan(tf_result.at<float>(0))),
+                    rad2deg(atan(tf_result.at<float>(1))));
+}

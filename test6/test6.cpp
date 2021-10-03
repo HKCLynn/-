@@ -9,6 +9,7 @@
 #include "Deal/Deal.h"
 #include "Armor/Armor.h"
 #include"Strategy/Strategy.h"
+#include "Parameter/Parameter.h"
 
 using namespace std;
 using namespace cv;
@@ -37,7 +38,8 @@ int main(int argc, char *argv[])
         FindArmor tools(frame, mask);
         //把装甲板的中心点全部存入中心点序列
         tools.lights_pair(centers,tracker);
-        tools.writing(tracker.last_armors);
+        strategy.Strategy_Armors(tracker.last_armors,frame);
+
         //预测方法
         Prediction prediction;
 

@@ -7,7 +7,7 @@ find_package(Eigen3 REQUIRED)
 
 
 
-include_directories (./ ./Deal ./Light ./Predictor ./Armor ./Strategy ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+include_directories (./ ./Deal ./Light ./Predictor ./Armor ./Strategy ./Parameter ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
 
 set(DEAL_SRC Deal/Deal.cpp)
@@ -15,9 +15,10 @@ set(LIGHT_SRC Light/Light.cpp)
 set(PREDICTOR_SRC Predictor/Predictor.cpp)
 set(ARMOR_SRC Armor/Armor.cpp)
 set(STRATEGY_SRC Strategy/Strategy.cpp)
+set(PARAMETER_SRC Parameter/Parameter.cpp)
 
 
-add_executable(test6 test6.cpp ${DIRSRCS} ${DEAL_SRC} ${LIGHT_SRC} ${PREDICTOR_SRC} ${ARMOR_SRC} ${STRATEGY_SRC})
+add_executable(test6 test6.cpp ${PARAMETER_SRC} ${DIRSRCS} ${DEAL_SRC} ${LIGHT_SRC} ${PREDICTOR_SRC} ${ARMOR_SRC} ${STRATEGY_SRC})
 
 link_directories(${OpenCV_LIBRARY_DIRS})
 
