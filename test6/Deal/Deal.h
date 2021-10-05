@@ -1,14 +1,14 @@
 /**
-*@file Deal.h
-*@author 徐英杰（541223130@qq.com）
-*/
+ * @file Deal.h
+ * @author 徐英杰（541223130@qq.com）
+ */
 
-#ifndef DEAL_H 
-#define DEAL_H 
+#pragma once
+
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace cv;
@@ -17,22 +17,9 @@ using namespace cv;
 double get_distance(Point2f point_one, Point2f point_two);
 //图像处理
 Mat imgPreprosses(const Mat src);
-
+//用来获得相机中心相对于装甲板中心的角度
 Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Point2f center);
-
+//角度转弧度
 float deg2rad(float deg);
+//弧度转角度
 float rad2deg(float rad);
-
-
-struct ResultPnP
-{
-    double yaw;
-    double pitch;
-    double roll;
-    Mat tran_vec;
-    Mat rotat_vec;
-    float distance;
-};
-
-#endif
-

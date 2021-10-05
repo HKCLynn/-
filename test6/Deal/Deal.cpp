@@ -2,15 +2,12 @@
 *@file Deal.cpp
 *@author 徐英杰（541223130@qq.com）
 */
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <stdio.h>
-#include <math.h>
-#include"Deal.h"
+
+#include "Deal.h"
+
 
 using namespace std;
 using namespace cv;
-
 
 /**
 *@brief 获得距离
@@ -21,10 +18,10 @@ using namespace cv;
 double get_distance(Point2f point_one, Point2f point_two)
 {
     double distance;
+    //得到两点距离
     distance = sqrt(pow(point_one.x - point_two.x, 2) + pow(point_one.y - point_two.y, 2));
     return distance;
 }
-
 
 /**
 *@brief 图像处理
@@ -55,14 +52,23 @@ Mat imgPreprosses(const Mat src)
     morphologyEx(mask, mask, MORPH_DILATE, kernel, Point(-1, -1), 1);
     return mask;
 }
-
-
-
+/**
+ * @brief 角度转换为弧度
+ * 
+ * @param deg 角度
+ * @return float 弧度
+ */
 float deg2rad(float deg)
 {
     return deg * 3.1415926 / 180.f;
 }
 
+/**
+ * @brief 弧度转化为角度
+ * 
+ * @param rad 弧度
+ * @return float 角度
+ */
 float rad2deg(float rad)
 {
     return rad * 180.f / 3.1415926;
@@ -78,16 +84,18 @@ float rad2deg(float rad)
  */
 Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Point2f center)
 {
-     Mat tf_point(3, 1, CV_32F);
-     Mat cameraMatrix_inverse;
-     cameraMatrix.convertTo(cameraMatrix_inverse, CV_32F);
-     cameraMatrix_inverse = cameraMatrix_inverse.inv();
-     tf_point.at<float>(0) = center.x;
-     tf_point.at<float>(1) = center.y;
-     tf_point.at<float>(2) = 1;
-     // 得到tan角矩阵
-     Mat tf_result = cameraMatrix_inverse * tf_point;
-     // 从图像坐标系转换成世界坐标系角度
-     return Point2f(rad2deg(atan(tf_result.at<float>(0))),
-                    rad2deg(atan(tf_result.at<float>(1))));
+    Mat tf_point(3, 1, CV_32F);
+    Mat cameraMatrix_inverse;
+    cameraMatrix.convertTo(cameraMatrix_inverse, CV_32F);
+    cameraMatrix_inverse = cameraMatrix_inverse.inv();
+    tf_point.at<float>(0) = center.x;
+    tf_point.at<float>(1) = center.y;
+    tf_point.at<float>(2) = 1;
+    // 得到tan角矩阵
+    Mat tf_result = cameraMatrix_inverse * tf_point;
+    // 从图像坐标系转换成世界坐标系角度
+    return Point2f(rad2deg(atan(tf_result.at<float>(0))),
+                   rad2deg(atan(tf_result.at<float>(1))));
 }
+
+

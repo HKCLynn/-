@@ -1,23 +1,22 @@
-
+/**
+ * @file test6.cpp
+ * @author 徐英杰 (541223130@qq.com)
+ * @brief 
+ * @version 1.0
+ * @date 2021-10-05
+ * 
+ * 
+ */
 
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <stdio.h>
-
-#include "Light/Light.h"
-#include "Predictor/Predictor.h"
-#include "Deal/Deal.h"
-#include "Armor/Armor.h"
-#include"Strategy/Strategy.h"
-#include "Parameter/Parameter.h"
+#include"Visioncontrol.h"
 
 using namespace std;
 using namespace cv;
 
 int main(int argc, char *argv[])
 {
-    //预测器序列
-    vector<Predictor> predictors;
     ArmorTracker tracker;
     Strategy strategy;
     //实例化相机
@@ -40,22 +39,7 @@ int main(int argc, char *argv[])
         tools.lights_pair(centers,tracker);
         strategy.Strategy_Armors(tracker.last_armors,frame);
 
-        //预测方法
-        Prediction prediction;
 
-        //如果不是第一帧
-        if (start != 0)
-        { //更新删除添加，预测操作
-            prediction.update_create_delete(centers, predictors, frame);
-        }
-        //如果是第一帧
-        if (start == 0)
-        {
-            //第一帧预测器的初始化
-            prediction.paint_initialization(centers, predictors);
-            //在此之后不是第一帧
-            start = 1;
-        }
         //放出效果图
         imshow("windows", frame);
         imshow("windows2",mask);

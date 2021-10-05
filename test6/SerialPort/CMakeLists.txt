@@ -1,11 +1,8 @@
 find_package(OpenCV REQUIRED)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+add_library(SerialPort SerialPort.cpp)
 
-cmake_minimum_required (VERSION 3.10)
-
-add_library(SerialPort STATIC SerialPort.cpp)
-
-target_include_directories(SerialPort PUBLIC include)
+target_include_directories(SerialPort PUBLIC .)
+target_include_directories(SerialPort PUBLIC ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(SerialPort ${OpenCV_LIBS})

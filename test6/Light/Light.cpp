@@ -2,20 +2,20 @@
 *@file Light.cpp
 *@author 徐英杰（541223130@qq.com）
 */
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include <stdio.h>
-#include <math.h>
 #include "Light.h"
-#include "Deal.h"
+
 
 using namespace std;
 using namespace cv;
 
 /**
-*@brief 初始化灯条
-*@param input_led 灯条外界四边形的四个点信息
-*/
+ * @brief 构造函数初始化
+ * 
+ * @param input_led 传入的灯条的四个点
+ * @param contours 传入灯条的轮廓
+ * @param center 传入灯条的中心点
+ */
+
 Light::Light(Point2f input_led[], vector<Point> contours, Point2f center)
 {
     //中间传输的灯条四个点信息
@@ -35,9 +35,13 @@ Light::Light(Point2f input_led[], vector<Point> contours, Point2f center)
     this->contours = contours;
     this->center = center;
 }
-
+/**
+ * @brief 消除椭圆拟合的误差
+ * 
+ */
 void Light::getTruePoint()
 {
+    //如果是近处的装甲板
     if (contourArea(this->contours) > 30)
     {
         float min_y = this->center.y;
@@ -46,8 +50,10 @@ void Light::getTruePoint()
         Point2f new_top = Point(-1, -1);
         float min_distance_top = MAXFLOAT;
         float min_distance_botoom = MAXFLOAT;
+        //对轮廓的每一个点进行遍历
         for (auto point : contours)
         {
+            //如果是上半部分的点
             if (point.y < min_y)
             {
                 // 找出离原来上顶点最近的点作新上顶点
@@ -58,6 +64,7 @@ void Light::getTruePoint()
                     new_top = point;
                 }
             }
+            //如果是下半部分的点
             if (point.y > max_y)
             {
                 // 找出离原来下顶点最近的点作新下顶点
@@ -69,14 +76,22 @@ void Light::getTruePoint()
                 }
             }
         }
+        //上顶点的坐标和下顶点的坐标都改变了
         if (new_bottom != Point2f(-1, -1) || new_top != Point2f(-1, -1))
         {
+            //上顶点的偏移量
             Point2f dta_top_location=new_top-this->top;
+            //下顶点的偏移量
             Point2f dta_bottom_location=new_bottom-this->bottom;
+            //替换上顶点
             this->top = new_top;
+            //替换下顶点
             this->bottom = new_bottom;
+            //替换新的中间坐标
             this->center = (new_top + new_bottom) / 2.f;
+            //替换新的高
             this->height = get_distance(this->top, this->bottom);
+            //同时将四个顶点的坐标也做替换（通过偏移量）
             for(int i=0;i<4;i++)
             {
                 if(this->points[i].y<this->center.y)

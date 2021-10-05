@@ -10,8 +10,9 @@
 #include <opencv2/opencv.hpp>
 #include "SerialPort.h"
 #include "GyroScope.h"
-#include "Deal.h"
 #include "Detector.h"
+#include "Parameter.h"
+#include "RMVideoCapture.h"
 
 // 识别模式
 enum Detect_mode

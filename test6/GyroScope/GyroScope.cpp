@@ -26,6 +26,8 @@ GyroScope::GyroScope()
  */
 GyroData GyroScope::filter(const vector<GyroData> &gyroScope)
 {
+    OtherParam other_param;
+    StrategyParam strategy_param;
     // 判断是否初始化
     if (!this->isInit)
     {

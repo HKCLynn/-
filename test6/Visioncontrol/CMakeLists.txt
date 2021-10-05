@@ -1,0 +1,9 @@
+add_library(Visioncontrol Visioncontrol.cpp)
+
+target_include_directories(Visioncontrol PUBLIC .)
+
+target_link_libraries(Visioncontrol SerialPort)
+target_link_libraries(Visioncontrol GyroScope)
+target_link_libraries(Visioncontrol Detector)
+target_link_libraries(Visioncontrol Parameter)
+target_link_libraries(Visioncontrol RMVideoCapture)

@@ -1,4 +1,19 @@
+/**
+ * @file Parameter.h
+ * @author 徐英杰 (541223130@qq.com)
+ * @brief 
+ * @version 1.0
+ * @date 2021-10-05
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #pragma once
+
+#include<opencv2/opencv.hpp>
+
+using namespace cv;
 
 class LightParam
 {
@@ -36,5 +51,35 @@ struct CameraParam
     int cam_Bgain = 180;     // 相机蓝色增益
     int cam_Ggain = 141;     // 相机绿色增益
     int cam_Rgain = 100;     // 相机红色增益
+
+};
+struct OtherParam
+{
+    int GRAY_THRESHOLD_RED=100;   // pre_handle -- 蓝色阈值
+    int GRAY_THRESHOLD_BLUE=60;  // pre_handle -- 红色阈值
+    float INIT_PITCH=0;         // GyroScope_init - 陀螺仪 - pitch 角度
+    float INIT_YAW=0;           // GyroScope_init - 陀螺仪 - yaw 角度
+    uint8_t INIT_COLOR_MODE=0;  // GyroScope_init - 己方颜色
+    uint8_t INIT_SHOOT_SPEED=0; // GyroScope_init - 枪口射速
+    uint8_t INIT_MODE=30;        // GyroScope_init - 模式
+    int point_scale=1;          // 调试显示的点大小
+
+
+};
+
+struct StrategyParam
+{
+    int SENTRY_TRACK_FRAMES=10;      // Armor - 哨兵模式追踪帧数
+    int NORMAL_TRACK_FRAMES=5;      // Armor - 普通模式
+    int RECORD_FRAMES=12;            // Armor - 时间序列记录最大帧数
+    int MAX_DIS=8000;                  // Armor - 最远距离
+    int MAX_DIS_DIFF=500;             // Armor - 最大切换装甲板距离差值
+    float GYRO_RADIUS_RATIO=10;      // 击打小陀螺时射击半径比值
+    float NORMAL_RADIUS_RATIO=1.1;    // 普通模式时射击半径比值
+    float SHOOT_CONFIDENCE_LEVEL=0.8; // 普通模式下预测点的置信度
+    int SHOOT_SPEED_15_BIAS=1;      // 15m/s 弹速负偏置
+    int SHOOT_SPEED_18_BIAS=1;      // 18m/s 弹速负偏置
+    int SHOOT_SPEED_30_BIAS=2;      // 30m/s 弹速负偏置
+
 
 };

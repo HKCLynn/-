@@ -4,66 +4,78 @@
 */
 
 #pragma once
-
-#include <iostream>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Core>
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
+#include <iostream>
+#include <cmath>
 #include <stdio.h>
-#include <math.h>
-#include "Light/Light.h"
+#include "Parameter.h"
 #include "Deal.h"
+#include "Light.h"
+
 using namespace std;
 using namespace cv;
 
+struct ResultPnP
+{
+public:
+    double yaw;
+    double pitch;
+    double roll;
+    Mat tran_vec;
+    Mat rotat_vec;
+    float distance;
+};
+
+//pnp信息
 class Armor
 {
 public:
-    //水平平均宽度
-    double middleWidth;
-    //平均高度
-    double middleHeight;
-    //中心点
-    Point2f center;
-    Point2f pre_center;
-    Light left_light;
-    Light right_light;
-    int dis_count = 0;
-    bool is_tracked = false;
-    ResultPnP PnP_data;
-    KalmanFilter kf_dis;
-    KalmanFilter kf;
+    double middleWidth;         //水平平均宽度
+    double middleHeight;        //平均高度
+    Point2f center;             //中心点
+    Point2f pre_center;         //预测的中心点
+    Light left_light;           //左灯条
+    Light right_light;          //右灯条
+    int dis_count = 0;          //消失帧数
+    bool is_tracked = false;    //是否被跟踪
+    ResultPnP PnP_data;         //PnP的数据
+    KalmanFilter kf_dis;        //对距离的卡尔曼滤波
+    KalmanFilter kf;            //对画面位置的卡尔曼滤波
+    bool kf_inited = false;     //位置的卡尔曼滤波的初始化标志位
+    bool kf_inited_dis = false; //距离的卡尔曼滤波的初始化标志位
 
-    bool kf_inited = false;
-    bool kf_inited_dis = false;
-    void kf_init(KalmanFilter &new_kf);
-    void kf_init_dis();
-    void get_pnp();
-    void update_kfer(KalmanFilter &kf);
-    Point2f get_pre_angle();
+    void kf_init();          //位置卡尔曼滤波初始化
+    void kf_init_dis();      //距离卡尔曼滤波初始化
+    void get_pnp();          //获得pnp信息
+    void update_kfer();      //卡尔曼滤波更新
+    Point2f get_pre_angle(); //获得预测的yaw和pitch
 };
 
 class ArmorTracker
 {
 public:
-    int start = 0;
-    vector<Armor> now_armors;
-    vector<Armor> last_armors;
-    void update_armors();
+    int start = 0;             //是否为第一帧
+    vector<Armor> now_armors;  //当前帧的所有装甲板
+    vector<Armor> last_armors; //上一帧存在的装甲板
+
+    void update_armors(); //对装甲板的更新
 };
 
 class FindArmor
 {
 public:
-    //未处理的图像
-    Mat frame;
-    //处理后的图像
-    Mat mask;
-    //所有轮廓
-    vector<vector<Point>> contours_all;
-    //轮廓信息
-    vector<Vec4i> hierarchy_all;
+    Mat frame;                          //未处理的图像
+    Mat mask;                           //处理后的图像
+    vector<vector<Point>> contours_all; //所有轮廓
+    vector<Vec4i> hierarchy_all;        //轮廓信息
+
     //灯条寻找并配对
     void lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker);
     //初始化
     FindArmor(Mat frame, Mat mask);
-    void writing(vector<Armor> armors);
 };
+
+

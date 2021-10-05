@@ -1,7 +1,15 @@
-#include "SerialPort.h"
+/**
+ * @file Visioncontrol.cpp
+ * @author 徐英杰 (541223130@qq.com)
+ * @brief 
+ * @version 1.0
+ * @date 2021-10-05
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #include "Visioncontrol.h"
-#include "Parameter.h"
-#include <opencv2/opencv.hpp>
 
 using namespace std;
 
@@ -37,9 +45,11 @@ bool Visioncontrol::run()
     // 读取数据
     if (!this->port.isOpen())
     {
-        cout<<"串口异常"<<endl;;
+        cout << "串口异常" << endl;
+        ;
     }
     gyro_data = port_manager.filter(this->port.readStruct<GyroData>(0x44, 0x55));
+
     // 根据收到的陀螺仪数据设置模式
     this->setId(gyro_data.mode);
     // 选择相机模式
@@ -48,7 +58,8 @@ bool Visioncontrol::run()
     if (!this->capture->read(this->frame))
     {
         // 不能正常打开相机
-        cout<<"相机异常"<<endl;;
+        cout << "相机异常" << endl;
+        ;
         return false;
     }
     // 根据收到的陀螺仪数据选择识别模式
@@ -58,13 +69,14 @@ bool Visioncontrol::run()
     // 处理程序
     try
     {
-        this->send_data = this->detector->get_data();
+        this->send_data = this->detector->get_data(this->frame);
     }
     catch (...)
     {
         this->send_data.pitch = 0.f;
         this->send_data.yaw = 0.f;
-        cout<<"数据发送异常"<<endl;;
+        cout << "数据发送异常" << endl;
+        ;
     }
 
     // 发送数据
@@ -79,16 +91,18 @@ void Visioncontrol::initCamera()
     {
         this->capture = unique_ptr<RMVideoCapture>(new RMVideoCapture());
         if (this->capture->isOpened())
+        {
             this->capture->set(CAP_PROP_EXPOSURE, camera_param.cam_exposure);
-        // init - 对比度
-        this->capture->set(CAP_PROP_CONTRAST, camera_param.cam_contrast);
-        // init - Gamma
-        this->capture->set(CAP_PROP_GAMMA, camera_param.cam_gamma);
-        // init - 设置颜色增益
-        this->capture->set(CAP_PROP_XI_WB_KB, camera_param.cam_Bgain);
-        this->capture->set(CAP_PROP_XI_WB_KG, camera_param.cam_Ggain);
-        this->capture->set(CAP_PROP_XI_WB_KR, camera_param.cam_Rgain);
-        // init - 启用颜色增益
-        this->capture->set(CAP_PROP_AUTO_WB, 0);
+            // init - 对比度
+            this->capture->set(CAP_PROP_CONTRAST, camera_param.cam_contrast);
+            // init - Gamma
+            this->capture->set(CAP_PROP_GAMMA, camera_param.cam_gamma);
+            // init - 设置颜色增益
+            this->capture->set(CAP_PROP_XI_WB_KB, camera_param.cam_Bgain);
+            this->capture->set(CAP_PROP_XI_WB_KG, camera_param.cam_Ggain);
+            this->capture->set(CAP_PROP_XI_WB_KR, camera_param.cam_Rgain);
+            // init - 启用颜色增益
+            this->capture->set(CAP_PROP_AUTO_WB, 0);
+        }
     }
 }
