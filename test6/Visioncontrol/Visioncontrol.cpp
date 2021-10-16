@@ -15,41 +15,22 @@ using namespace std;
 
 void Visioncontrol::setCamera()
 {
-    // 获取相机模式
-    uint8_t tmp_camId;
-    // 判断是否切换相机
-    switch (this->__mode)
-    {
-    case 0U:
-    case 1U:
-        tmp_camId = NORMAL_CAM;
-        break;
-    case 2U:
-    case 3U:
-        tmp_camId = RUNE_CAM;
-        break;
-    default:
-        tmp_camId = NORMAL_CAM;
-        break;
-    }
-    if (this->__cameraId != tmp_camId)
+    if (this->__cameraId == 0U)
     {
         this->capture.reset();
-        this->initCamera(tmp_camId);
-        this->__cameraId = tmp_camId;
+        this->initCamera();
+        __cameraId = 1U;
     }
 }
 
-bool Visioncontrol::run()
+bool Visioncontrol::run(ArmorTracker &tracker, Strategy &strategy)
 {
     // 读取数据
     if (!this->port.isOpen())
     {
         cout << "串口异常" << endl;
-        ;
     }
     gyro_data = port_manager.filter(this->port.readStruct<GyroData>(0x44, 0x55));
-
     // 根据收到的陀螺仪数据设置模式
     this->setId(gyro_data.mode);
     // 选择相机模式
@@ -59,34 +40,43 @@ bool Visioncontrol::run()
     {
         // 不能正常打开相机
         cout << "相机异常" << endl;
-        ;
         return false;
     }
-    // 根据收到的陀螺仪数据选择识别模式
-    this->setDetector();
     // 获取当前时间戳
     float record_time = getTickCount();
     // 处理程序
     try
     {
-        this->send_data = this->detector->get_data(this->frame);
+        this->send_data = this->detector->get_data(this->frame, tracker, strategy ,record_time ,gyro_data);
+        cout << "yaw=" << send_data.yaw << endl;
+        cout << "pitch=" << send_data.pitch << endl;
     }
     catch (...)
     {
         this->send_data.pitch = 0.f;
         this->send_data.yaw = 0.f;
         cout << "数据发送异常" << endl;
-        ;
     }
 
     // 发送数据
     this->port.writeStruct(send_data);
+    //放出效果图
+    namedWindow("windows", WINDOW_NORMAL);
+    resizeWindow("windows", Size(640, 512));
+    imshow("windows", frame);
+    if (27 == waitKey(1))
+    {
+        if (27 == waitKey(0))
+        {
+            exit(0);
+        }
+    }
     return true;
 }
 
 void Visioncontrol::initCamera()
 {
-    CameraParam camera_param;
+    CameraParam camera_param("/home/lynn/桌面/-/test6/setting_file/CameraParam.yml");
     if (path.empty())
     {
         this->capture = unique_ptr<RMVideoCapture>(new RMVideoCapture());

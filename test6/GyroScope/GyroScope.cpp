@@ -26,8 +26,8 @@ GyroScope::GyroScope()
  */
 GyroData GyroScope::filter(const vector<GyroData> &gyroScope)
 {
-    OtherParam other_param;
-    StrategyParam strategy_param;
+    OtherParam other_param("/home/lynn/桌面/-/test6/setting_file/OtherParam.yml");
+    StrategyParam strategy_param("/home/lynn/桌面/-/test6/setting_file/OtherParam.yml");
     // 判断是否初始化
     if (!this->isInit)
     {

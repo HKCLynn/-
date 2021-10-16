@@ -5,7 +5,6 @@
 
 #include "Deal.h"
 
-
 using namespace std;
 using namespace cv;
 
@@ -38,7 +37,7 @@ Mat imgPreprosses(const Mat src)
     //通道相减后得到的图像
     Mat image;
     if (channels.size() == 3)
-        image = channels[0] - channels[2];
+        image = channels[2] - channels[0];
     else
         image = src;
     //最后处理得到的图像
@@ -84,6 +83,7 @@ float rad2deg(float rad)
  */
 Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Point2f center)
 {
+
     Mat tf_point(3, 1, CV_32F);
     Mat cameraMatrix_inverse;
     cameraMatrix.convertTo(cameraMatrix_inverse, CV_32F);
@@ -97,5 +97,3 @@ Point2f calculateRelativeAngle(const Mat &cameraMatrix, const Mat &distCoeff, Po
     return Point2f(rad2deg(atan(tf_result.at<float>(0))),
                    rad2deg(atan(tf_result.at<float>(1))));
 }
-
-

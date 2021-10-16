@@ -3,8 +3,6 @@
 *@author 徐英杰（541223130@qq.com）
 */
 
-
-
 #include "Armor.h"
 
 using namespace std;
@@ -17,10 +15,11 @@ using namespace Eigen;
 *@param mask 传入二值化等图像处理后的图
 */
 
-FindArmor::FindArmor(Mat frame, Mat mask)
+FindArmor::FindArmor(Mat frame, Mat mask, GyroData gyrodata)
 {
     this->frame = frame;
     this->mask = mask;
+    this->gyrodata = gyrodata;
 }
 
 /**
@@ -28,12 +27,10 @@ FindArmor::FindArmor(Mat frame, Mat mask)
 *@param centers 配对后将装甲板中心点存入的序列
 */
 
-void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
+void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker, float &record_time)
 {
-    //筛选灯条的参数
-    LightParam light_param;
-    //筛选装甲板的参数
-    ArmorParam armor_param;
+    ArmorParam armor_param("/home/lynn/桌面/-/test6/setting_file/ArmorParam.yml");
+    LightParam light_param("/home/lynn/桌面/-/test6/setting_file/LightParam.yml");
     //在二值化等图像处理后的图片中寻找轮廓
     findContours(mask, contours_all, hierarchy_all, RETR_EXTERNAL, CHAIN_APPROX_NONE, Point());
     //存放每个灯条四个点坐标的容器
@@ -127,8 +124,17 @@ void FindArmor::lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker)
             input_armor.center = (light_info[i].center + light_info[j].center) / 2;
             //得到pnp信息
             input_armor.get_pnp();
-            //对装甲板进行卡尔曼滤波初始化
-            input_armor.kf_init();
+            //得到装甲板的时间戳
+            input_armor.appear_time = record_time;
+            //得到装甲板的陀螺仪角速度位置
+            input_armor.gyro_location = Point2f(gyrodata.yaw, gyrodata.pitch);
+            //获得装甲板在图像的角度
+            input_armor.relative_angles = calculateRelativeAngle(
+                (Mat_<double>(3, 3) << 1.6041191539594568e+03, 0., 6.3983687194220943e+02, 0.,
+                 1.6047833493341714e+03, 5.1222951297937527e+02, 0., 0., 1.),
+                (Mat_<double>(5, 1) << -6.3687295852461456e-01, -1.9748008790347320e+00,
+                 3.0970703651800782e-02, 2.1944646842516919e-03, 0.),
+                input_armor.center);
             //插入装甲板进容器里
             armors.push_back(input_armor);
             //如果是第一帧
@@ -173,12 +179,10 @@ void ArmorTracker::update_armors()
         for (int j = 0; j < this->now_armors.size(); j++)
         {
             //如果距离足够小
-            if (get_distance(last_armors[i].center, now_armors[j].center) < 100)
+            if (get_distance(last_armors[i].center, now_armors[j].center) < 10000000)
             {
                 //匹配成功
                 is_match = true;
-                //保留初始化更新之后的装甲板的卡尔曼滤波的信息
-                now_armors[j].kf = last_armors[i].kf;
                 //进行迭代
                 last_armors[i] = now_armors[j];
                 //消失帧数清零
@@ -218,7 +222,7 @@ void ArmorTracker::update_armors()
     for (int i = 0; i < last_armors.size(); i++)
     {
         //连续消失帧数过多
-        if (last_armors[i].dis_count > 2)
+        if (last_armors[i].dis_count > 9)
         {
             //删除该装甲板
             last_armors.erase(last_armors.begin() + i);
@@ -246,8 +250,8 @@ void Armor::get_pnp()
     mimage.push_back(right_light.top);
     mimage.push_back(left_light.top);
     //相机内参矩阵
-    Mat camMatrix = (Mat_<double>(3, 3) << 1.2853517927598091e+03, 0., 3.1944768628958542e+02,
-                     0., 1.2792339468697937e+03, 2.3929354061292258e+02, 0., 0., 1.);
+    Mat camMatrix = (Mat_<double>(3, 3) << 1.6041191539594568e+03, 0., 6.3983687194220943e+02, 0.,
+                     1.6047833493341714e+03, 5.1222951297937527e+02, 0., 0., 1.);
 
     //相机畸变矩阵
     Mat distCoeff = (Mat_<double>(5, 1) << -6.3687295852461456e-01, -1.9748008790347320e+00,
@@ -297,57 +301,4 @@ void Armor::get_pnp()
 
     PnP_data.rotat_vec = rVec;
     PnP_data.rotat_vec = tVec;
-}
-
-/**
- * @brief 位置卡尔曼滤波初始化
- * 
- */
-void Armor::kf_init()
-{
-    KalmanFilter new_kf(4, 2, 0);
-    RNG rng;
-    new_kf.transitionMatrix = (Mat_<float>(4, 4) << 1, 0, 1, 0,
-                               0, 1, 0, 1,
-                               0, 0, 1, 0,
-                               0, 0, 0, 1);                     //转移矩阵A
-    setIdentity(new_kf.measurementMatrix);                      //测量矩阵H
-    setIdentity(new_kf.processNoiseCov, Scalar::all(1e-5));     //系统噪声方差矩阵Q
-    setIdentity(new_kf.measurementNoiseCov, Scalar::all(1e-7)); //测量噪声方差矩阵R
-    setIdentity(new_kf.errorCovPost, Scalar::all(1));
-    //后验错误估计协方差矩阵P
-    rng.fill(new_kf.statePost, RNG::UNIFORM, 0, 0); //初始状态值x(0)
-    this->kf = new_kf;
-    //初始化标志位为真
-    this->kf_inited = true;
-}
-
-/**
- * @brief 位置卡尔曼滤波的更新
- * 
- */
-void Armor::update_kfer()
-{
-    //观测量
-    Mat measurement = Mat::zeros(2, 1, CV_32F);
-    measurement.at<float>(0) = (float)this->center.x;
-    measurement.at<float>(1) = (float)this->center.y;
-    //更新进滤波器中
-    this->kf.correct(measurement);
-    //将这一帧的点进行预测，并保存预测点
-    Mat prediction = this->kf.predict();
-    //得到预测点
-    this->pre_center = Point2f(prediction.at<float>(0), prediction.at<float>(1));
-}
-
-Point2f Armor::get_pre_angle()
-{
-    //相机内参矩阵
-    Mat camMatrix = (Mat_<double>(3, 3) << 1.2853517927598091e+03, 0., 3.1944768628958542e+02,
-                     0., 1.2792339468697937e+03, 2.3929354061292258e+02, 0., 0., 1.);
-
-    //相机畸变矩阵
-    Mat distCoeff = (Mat_<double>(5, 1) << -6.3687295852461456e-01, -1.9748008790347320e+00,
-                     3.0970703651800782e-02, 2.1944646842516919e-03, 0.);
-    return calculateRelativeAngle(camMatrix, distCoeff, pre_center);
 }

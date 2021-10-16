@@ -44,12 +44,11 @@ public:
     DataStruct send_data;   //发送数据
     uint8_t __mode;         // 接收的模式
     uint8_t __detectId;     // 识别模式
-    uint8_t __cameraId;     // 相机模式
-    bool run();             // 处理函数 // 设置模式
+    uint8_t __cameraId=0U;     // 相机模式
+    bool run(ArmorTracker &tracker,Strategy &strategy); // 处理函数 // 设置模式
     inline void setId(uint8_t mode) { __mode = mode; }
 
-    void initCamera(int _id); // 初始化相机
+    void initCamera(); // 初始化相机
     void setDetector();       // 设置检测器
-    void setCamera();         // 设置相机
-    void initCamera();
+    void setCamera();
 };

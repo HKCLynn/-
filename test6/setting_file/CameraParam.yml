@@ -1,0 +1,11 @@
+%YAML:1.0
+---
+
+image_width: 1280  
+image_height: 1024
+cam_exposure: 300
+cam_gamma: 100 
+cam_contrast: 100 
+cam_Bgain: 100 
+cam_Ggain: 121 
+cam_Rgain: 150 

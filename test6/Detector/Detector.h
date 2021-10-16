@@ -8,13 +8,16 @@
  * @copyright Copyright (c) 2021
  * 
  */
+
+#pragma once
 #include "getdata.h"
 #include "Strategy.h"
+#include "GyroScope.h"
 
 //检测器
 class Detector
 {
 public:
     DataStruct send_data;            //发送给电控的数据
-    DataStruct get_data(Mat &frame); //获得发送给电控的数据
+    DataStruct get_data(Mat &frame, ArmorTracker &tracker, Strategy &strategy ,float &,GyroData); //获得发送给电控的数据
 };

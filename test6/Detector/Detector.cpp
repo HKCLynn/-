@@ -11,8 +11,6 @@
 
 #include "Detector.h"
 
-
-
 using namespace std;
 using namespace cv;
 /**
@@ -21,38 +19,22 @@ using namespace cv;
  * @param frame 处理的画面
  * @return DataStruct 发送给电控的结构体信息
  */
-DataStruct Detector::get_data(Mat &frame)
+DataStruct Detector::get_data(Mat &frame, ArmorTracker &tracker, Strategy &strategy, float &record_time, GyroData gyrodata)
 {
     //定义发送给电控的结构体信息
     DataStruct send_data;
-    //追踪装甲板
-    ArmorTracker tracker;
-    //决策信息
-    Strategy strategy;
+    //处理之后的图像
+    Mat mask;
+    //中心点序列
+    vector<Point2f> centers;
+    //图像处理
+    mask = imgPreprosses(frame);
+    //寻找装甲板对应的灯条
+    FindArmor tools(frame, mask, gyrodata);
+    //把装甲板的中心点全部存入中心点序列
+    tools.lights_pair(centers, tracker, record_time);
 
-    while (1)
-    {
-        //传入摄像头的信息
-        Mat frame;
-        //处理之后的图像
-        Mat mask;
-        //中心点序列
-        vector<Point2f> centers;
-        //图像处理
-        mask = imgPreprosses(frame);
-        //寻找装甲板对应的灯条
-        FindArmor tools(frame, mask);
-        //把装甲板的中心点全部存入中心点序列
-        tools.lights_pair(centers, tracker);
-        //对得到的所有装甲板进行决策
-        send_data=strategy.Strategy_Armors(tracker.last_armors, frame);
-
-        //放出效果图
-        imshow("windows", frame);
-        imshow("windows2", mask);
-        if (27 == waitKey(30))
-        {
-            break;
-        }
-    }
+    //对得到的所有装甲板进行决策
+    send_data = strategy.Strategy_Armors(tracker.last_armors, frame);
+    return send_data;
 }

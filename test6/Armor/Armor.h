@@ -14,6 +14,7 @@
 #include "Parameter.h"
 #include "Deal.h"
 #include "Light.h"
+#include "GyroScope.h"
 
 using namespace std;
 using namespace cv;
@@ -46,12 +47,11 @@ public:
     KalmanFilter kf;            //对画面位置的卡尔曼滤波
     bool kf_inited = false;     //位置的卡尔曼滤波的初始化标志位
     bool kf_inited_dis = false; //距离的卡尔曼滤波的初始化标志位
+    int64 appear_time;          // 追踪匹配信息 -- 每帧装甲板出现的时间
+    Point2f gyro_location;      // 陀螺仪位置
+    Point2f relative_angles;    // 追踪匹配信息 -- 图像坐标系中的角度
 
-    void kf_init();          //位置卡尔曼滤波初始化
-    void kf_init_dis();      //距离卡尔曼滤波初始化
     void get_pnp();          //获得pnp信息
-    void update_kfer();      //卡尔曼滤波更新
-    Point2f get_pre_angle(); //获得预测的yaw和pitch
 };
 
 class ArmorTracker
@@ -67,15 +67,14 @@ public:
 class FindArmor
 {
 public:
+    GyroData gyrodata;
     Mat frame;                          //未处理的图像
     Mat mask;                           //处理后的图像
     vector<vector<Point>> contours_all; //所有轮廓
     vector<Vec4i> hierarchy_all;        //轮廓信息
 
     //灯条寻找并配对
-    void lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker);
+    void lights_pair(vector<Point2f> &centers, ArmorTracker &Tracker, float &);
     //初始化
-    FindArmor(Mat frame, Mat mask);
+    FindArmor(Mat frame, Mat mask, GyroData gyrodata);
 };
-
-

@@ -1,0 +1,46 @@
+            //进行更新
+            tracking_armor.update_kfer();
+            //获得预测的yaw
+            total_yaw = tracking_armor.get_pre_angle().x;
+            //获得预测的pitch
+            total_pitch = tracking_armor.get_pre_angle().y;
+            //追踪模式
+            this->track_mode(total_yaw, total_pitch);
+            //画出追踪的装甲板信息
+            circle(frame, tracking_armor.pre_center, 5, Scalar(0, 255, 0), -1);
+            circle(frame, tracking_armor.center, 5, Scalar(0, 0, 255), -1);
+            //画出配对成功的灯条的外接矩形
+            for (int k = 0; k <= 3; k++)
+            {
+                line(frame, tracking_armor.left_light.points[k], tracking_armor.left_light.points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+                line(frame, tracking_armor.right_light.points[k], tracking_armor.right_light.points[(k + 1) % 4], Scalar(0, 0, 255), 2);
+            }
+            //画出对角线
+            line(frame, tracking_armor.left_light.top, tracking_armor.right_light.bottom, Scalar(0, 0, 255), 2);
+            line(frame, tracking_armor.right_light.top, tracking_armor.left_light.bottom, Scalar(0, 0, 255), 2);
+        }
+
+
+            //追踪装甲板
+    ArmorTracker tracker;
+    //决策信息
+    Strategy strategy;
+    VideoCapture video("/home/lynn/桌面/-/test6/video/test5.avi");
+
+    while (1)
+    {
+        //传入摄像头的信息
+        Mat frame;
+        video >> frame;
+        Mat mask;
+        //中心点序列
+        vector<Point2f> centers;
+        //图像处理
+        mask = imgPreprosses(frame);
+        //寻找装甲板对应的灯条
+        FindArmor tools(frame, mask);
+        //把装甲板的中心点全部存入中心点序列
+        tools.lights_pair(centers, tracker);
+        //对得到的所有装甲板进行决策
+        strategy.Strategy_Armors(tracker.last_armors, frame);
+    }

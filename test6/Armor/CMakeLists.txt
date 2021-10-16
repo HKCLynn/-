@@ -7,4 +7,4 @@ target_include_directories(Armor PUBLIC .)
 target_include_directories(Armor PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_include_directories(Armor PUBLIC ${Eigen3_INCLUDE_DIRS})
 
-target_link_libraries(Armor Parameter Light Deal  ${OpenCV_LIBS})
+target_link_libraries(Armor Parameter Light Deal GyroScope  ${OpenCV_LIBS})

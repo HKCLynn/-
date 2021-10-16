@@ -1,0 +1,8 @@
+%YAML:1.0
+---
+
+MAX_RATIO: 10        
+MIN_RATIO: 1.5
+MIN_AREA_RATIO: 0.6
+MAX_ANGLE: 45    
+MIN_AREA: 1000         
